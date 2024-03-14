@@ -33,6 +33,9 @@ dependencies {
 	implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.10.0'
 	implementation 'org.springframework.kafka:spring-kafka'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	// https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.17.0-rc1'
+
 
 
 
