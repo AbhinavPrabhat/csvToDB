@@ -7,6 +7,7 @@ import com.abhinav.ipldashboard.entity.MatchModel;
 import com.abhinav.ipldashboard.helper.CSVHelper;
 import com.abhinav.ipldashboard.message.ResponseMessage;
 import com.abhinav.ipldashboard.service.CSVService;
+import com.abhinav.ipldashboard.service.KafkaProducerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -32,6 +33,9 @@ public class CSVController {
     @Autowired
     private CSVService csvFileService;
 
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+
     @PostMapping("/upload")
     public ResponseEntity<ResponseMessage> uploadFile(@RequestParam("file") MultipartFile file) {
         String message = "";
@@ -53,6 +57,31 @@ public class CSVController {
         message = "Please upload a CSV file!";
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseMessage(message));
     }
+
+    @PostMapping("/kafkapush")
+    public ResponseEntity<ResponseMessage> pushToKafka(@RequestParam("file") MultipartFile file) {
+        String message = "";
+
+        if (CSVHelper.hasCSVFormat(file)) {
+            try {
+                // Convert CSV data to a list of MatchModel objects
+                List<MatchModel> modelList = CSVHelper.csvToMatches(file.getInputStream());
+
+                // Push the list of model objects to Kafka
+                kafkaProducerService.sendToKafka(modelList);
+
+                message = "Pushed the file data to Kafka successfully: " + file.getOriginalFilename();
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(message));
+            } catch (Exception e) {
+                message = "Could not push the file data to Kafka: " + file.getOriginalFilename() + "!";
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(message));
+            }
+        }
+
+        message = "Please upload a CSV file!";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseMessage(message));
+    }
+
 
     @GetMapping("/getAllMatches")
     public ResponseEntity<List<MatchModel>> getAllMatches() {
